@@ -98,3 +98,20 @@ func TestParseSampleOSRelease(t *testing.T) {
 		t.Fatalf("disk %+v", s.Disk)
 	}
 }
+
+func TestUNCPathRejectsEscapes(t *testing.T) {
+	cases := map[string]string{
+		"/home/me":            `\\wsl.localhost\Ubuntu\home\me`,
+		"/":                   `\\wsl.localhost\Ubuntu`,
+		"":                    `\\wsl.localhost\Ubuntu`,
+		"/home/../../evil/x":  `\\wsl.localhost\Ubuntu`,
+		"/home/me/..":         `\\wsl.localhost\Ubuntu`,
+		`/home/a\..\..\srv\s`: `\\wsl.localhost\Ubuntu`,
+		"relative/path":       `\\wsl.localhost\Ubuntu`,
+	}
+	for in, want := range cases {
+		if got := UNCPath("Ubuntu", in); got != want {
+			t.Errorf("UNCPath(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

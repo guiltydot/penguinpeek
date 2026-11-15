@@ -4,6 +4,18 @@ All notable changes to PenguinPeek are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Security
+- Disk compaction no longer writes its elevated PowerShell script or its
+  diskpart commands to fixed files in `%TEMP%`, where another program running
+  as you could swap them before the administrator prompt. The script is
+  passed inline, and PowerShell, `wsl.exe` and `diskpart.exe` are started by
+  their full system paths.
+- *Open home folder* and *Open in VS Code* fall back to the distro root when
+  Linux reports an unusual `$HOME` (for example one containing `..`), so
+  Explorer can never be pointed at another network share.
+
 ## [1.0.0]
 
 First public release.

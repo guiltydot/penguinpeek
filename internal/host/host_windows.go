@@ -155,42 +155,26 @@ func SetAutostart(on bool) error {
 	return k.SetStringValue(runValueName, `"`+exe+`"`)
 }
 
-// compactScript runs elevated. It shuts WSL down (diskpart cannot compact an
-// attached disk), then compacts the VHDX read-only attached.
-const compactScript = `param([string]$Vhdx)
-$ErrorActionPreference = 'Stop'
-$Host.UI.RawUI.WindowTitle = 'PenguinPeek - compact WSL disk'
-Write-Host "Compacting $Vhdx"
-$before = (Get-Item -LiteralPath $Vhdx).Length
-Write-Host 'Shutting down WSL...'
-wsl.exe --shutdown
-Start-Sleep -Seconds 3
-$dp = Join-Path $env:TEMP 'penguinpeek-compact.txt'
-@(
-  "select vdisk file=""$Vhdx""",
-  'attach vdisk readonly',
-  'compact vdisk',
-  'detach vdisk'
-) | Set-Content -Encoding ASCII -LiteralPath $dp
-try { diskpart /s $dp } finally { Remove-Item -LiteralPath $dp -ErrorAction SilentlyContinue }
-$after = (Get-Item -LiteralPath $Vhdx).Length
-Write-Host ('Done: {0:N2} GB -> {1:N2} GB' -f ($before/1GB), ($after/1GB))
-Read-Host 'Press Enter to close'
-`
-
 // CompactVHDX shows a UAC prompt and runs the compaction in a visible,
 // elevated PowerShell window. It returns once the window is launched.
 func CompactVHDX(vhdx string) error {
 	if _, err := os.Stat(vhdx); err != nil {
 		return fmt.Errorf("disk file: %w", err)
 	}
-	script := filepath.Join(os.TempDir(), "penguinpeek-compact.ps1")
-	if err := os.WriteFile(script, []byte(compactScript), 0o600); err != nil {
+	sys, err := windows.GetSystemDirectory()
+	if err != nil {
 		return err
 	}
-	args := fmt.Sprintf(`-NoProfile -ExecutionPolicy Bypass -File "%s" -Vhdx "%s"`, script, vhdx)
+	// The script travels inside the elevated command line itself: no file
+	// is written that another process could swap before UAC approval.
+	enc, err := compactCommand(vhdx, sys)
+	if err != nil {
+		return err
+	}
+	args := "-NoProfile -ExecutionPolicy Bypass -EncodedCommand " + enc
 	verb, _ := syscall.UTF16PtrFromString("runas")
-	file, _ := syscall.UTF16PtrFromString("powershell.exe")
+	// Full path: an elevated launch must not resolve through the user's PATH.
+	file, _ := syscall.UTF16PtrFromString(filepath.Join(sys, `WindowsPowerShell\v1.0\powershell.exe`))
 	params, _ := syscall.UTF16PtrFromString(args)
 	if err := windows.ShellExecute(0, verb, file, params, nil, windows.SW_SHOWNORMAL); err != nil {
 		if errors.Is(err, windows.ERROR_CANCELLED) {

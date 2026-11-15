@@ -1,31 +1,95 @@
+# ---------------------------------------------------------------------------
 # Build output
+# ---------------------------------------------------------------------------
 bin/
-build/appicon.icns
+dist/
+*.exe
+*.msix
+*.appx
+*.msi
+*.zip
 *.syso
+build/appicon.icns
+# NSIS writes the installer next to its script
+build/windows/nsis/*-installer.exe
+# The build-assets updater recreates folders for platforms PenguinPeek doesn't ship
+build/darwin/
+build/linux/
+build/ios/
+build/android/
 frontend/dist/
 frontend/node_modules/
 frontend/.svelte-check/
+frontend/.vite/
+*.tsbuildinfo
+
+# Go test and profiling output
+*.test
+*.out
+*.prof
+coverage.*
+cover.html
 
 # Tool caches
 .task/
 .wails/
+.cache/
+.eslintcache
 
-# Private / local-only notes and tooling
+# ---------------------------------------------------------------------------
+# Secrets and signing material: never commit these
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.pem
+*.key
+*.cer
+*.crt
+*.snk
+*.keystore
+*.jks
+secrets.*
+credentials.*
+*.secret
+
+# ---------------------------------------------------------------------------
+# Private / local-only notes and AI tooling
+# ---------------------------------------------------------------------------
 docs/
 CLAUDE.md
 CLAUDE.local.md
 .claude/
 AGENTS.md
 *.local.md
-.env
-.env.*
+*.local.*
 
-# Benchmark runs are machine-specific; README summarises representative numbers
-benchmarks/results/
-benchmarks/HISTORY.md
+# Benchmark runs record this machine's hardware and Windows build; the README
+# summarises representative numbers
+benchmarks/
 
+# Logs and crash dumps
+*.log
+npm-debug.log*
+pnpm-debug.log*
+*.dmp
+*.stackdump
+
+# ---------------------------------------------------------------------------
 # OS / editor noise
+# ---------------------------------------------------------------------------
 .DS_Store
 Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.swp
+*.swo
+*~
+*.orig
+*.rej
 .vscode/
 .idea/
+*.code-workspace
+.history/

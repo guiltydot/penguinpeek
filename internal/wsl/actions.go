@@ -7,7 +7,9 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 )
@@ -92,12 +94,22 @@ func (r *Runner) Trim(ctx context.Context, distro string) (string, error) {
 }
 
 // UNCPath is the Windows path of a guest path, e.g. \\wsl.localhost\Ubuntu\home\me.
+// A guest path that is not a clean absolute path (e.g. one with "..", which
+// Explorer would resolve to another server) falls back to the distro root.
 func UNCPath(distro, guestPath string) string {
 	p := `\\wsl.localhost\` + distro
-	if guestPath != "" && guestPath != "/" {
+	if !safeGuestPath(guestPath) {
+		return p
+	}
+	if guestPath != "/" {
 		p += strings.ReplaceAll(guestPath, "/", `\`)
 	}
 	return p
+}
+
+func safeGuestPath(p string) bool {
+	return strings.HasPrefix(p, "/") && path.Clean(p) == p &&
+		!strings.ContainsAny(p, "\\:*?\"<>|\x00") && !slices.Contains(strings.Split(p, "/"), "..")
 }
 
 // OpenFiles opens the guest's home (or root when unknown) in File Explorer.
@@ -122,7 +134,7 @@ func (r *Runner) OpenVSCode(distro, home string) error {
 		return err
 	}
 	args := []string{"--remote", "wsl+" + distro}
-	if home != "" {
+	if safeGuestPath(home) {
 		args = []string{"--folder-uri", "vscode-remote://wsl+" + distro + (&url.URL{Path: home}).EscapedPath()}
 	}
 	cmd := exec.Command(code, args...)
