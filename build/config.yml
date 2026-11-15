@@ -11,7 +11,7 @@ info:
   description: "PenguinPeek" # The application description (Windows shows this as the tray and Task Manager name)
   copyright: "© 2026 PenguinPeek contributors" # Copyright text
   comments: "Lightweight WSL2 tray monitor" # Comments
-  version: "1.0.0" # The application version
+  version: "1.0.1" # The application version
   # cfBundleIconName: "appicon" # The macOS icon name in Assets.car icon bundles (optional)
   #                               # Should match the name of your .icon file without the extension
   #                               # If not set and Assets.car exists, defaults to "appicon"
