@@ -1,0 +1,73 @@
+version: '3'
+
+vars:
+  APP_NAME: "PenguinPeek"
+  BIN_DIR: "bin"
+  # Semantic version, single source of truth. Bump with scripts/version.sh.
+  VERSION:
+    # read/echo are builtins of Task's shell, so this also works on Windows
+    # without Unix tools on PATH.
+    sh: read -r v < VERSION; echo "$v"
+  PACKAGE_MANAGER: '{{.PACKAGE_MANAGER | default "pnpm"}}'
+  VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
+  # PenguinPeek is Windows-only (it drives wsl.exe and the Windows tray), so
+  # every build targets Windows, including when cross-compiling from WSL.
+  GOOS: windows
+
+# Exported so every sub-task (bindings, tidy, go build) targets the same OS.
+env:
+  GOOS: windows
+
+includes:
+  common: ./build/Taskfile.yml
+  windows: ./build/windows/Taskfile.yml
+
+tasks:
+  build:
+    summary: Builds the application
+    cmds:
+      - task: "windows:build"
+
+  install:
+    summary: Builds, installs to %LOCALAPPDATA%\Programs\PenguinPeek, adds a desktop shortcut and starts it
+    deps:
+      - task: build
+    cmds:
+      - cmd: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Exe "{{.BIN_DIR}}/{{.APP_NAME}}.exe"
+        platforms: [windows]
+      # From WSL: hand PowerShell Windows paths for both the script and the exe.
+      - cmd: powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w scripts/install.ps1)" -Exe "$(wslpath -w {{.BIN_DIR}}/{{.APP_NAME}}.exe)"
+        platforms: [linux]
+
+  bench:
+    summary: 'Benchmarks the installed app (CPU, RAM, disk) into benchmarks/. Add a note with NOTE="what changed"'
+    cmds:
+      - cmd: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/bench.ps1 -OutDir benchmarks/results -Note "{{.NOTE}}"
+        platforms: [windows]
+      - cmd: powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w scripts/bench.ps1)" -OutDir "$(wslpath -w benchmarks/results)" -Note "{{.NOTE}}"
+        platforms: [linux]
+
+  version:
+    summary: "Shows or bumps the semantic version: task version -- patch|minor|major|set X.Y.Z"
+    cmds:
+      - scripts/version.sh {{.CLI_ARGS}}
+
+  package:
+    summary: Packages a production build of the application
+    cmds:
+      - task: "windows:package"
+
+  run:
+    summary: Runs the application
+    cmds:
+      - task: "windows:run"
+
+  dev:
+    summary: Runs the application in development mode
+    cmds:
+      - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
+
+  install:msix:tools:
+    summary: Installs tools required for Windows MSIX packaging
+    cmds:
+      - task: windows:install:msix:tools

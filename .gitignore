@@ -1,0 +1,31 @@
+# Build output
+bin/
+build/appicon.icns
+*.syso
+frontend/dist/
+frontend/node_modules/
+frontend/.svelte-check/
+
+# Tool caches
+.task/
+.wails/
+
+# Private / local-only notes and tooling
+docs/
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+AGENTS.md
+*.local.md
+.env
+.env.*
+
+# Benchmark runs are machine-specific; README summarises representative numbers
+benchmarks/results/
+benchmarks/HISTORY.md
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

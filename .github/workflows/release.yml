@@ -1,0 +1,54 @@
+name: Release
+
+# Push a tag that matches VERSION (e.g. v1.0.0) to build and publish a release.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag must match VERSION
+        shell: bash
+        run: |
+          want="v$(tr -d '[:space:]' < VERSION)"
+          if [ "$want" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match VERSION ($want)"; exit 1
+          fi
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.1.0
+      - name: Build x64 and ARM64
+        shell: bash
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          wails3 task build ARCH=amd64
+          mv bin/PenguinPeek.exe "dist/PenguinPeek-$v-windows-x64.exe"
+          wails3 task build ARCH=arm64
+          mv bin/PenguinPeek.exe "dist/PenguinPeek-$v-windows-arm64.exe"
+          cd dist && sha256sum *.exe > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Release notes from CHANGELOG
+        shell: bash
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          awk -v v="$v" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "See CHANGELOG.md" > notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          body_path: notes.md
