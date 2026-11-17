@@ -89,10 +89,10 @@ func TestCPUPercentClamps(t *testing.T) {
 
 func TestParseSampleOSRelease(t *testing.T) {
 	out := "1 1\n@@\ncpu  1 0 1 1 0 0 0 0 0 0\n@@\nMemTotal: 10 kB\nMemAvailable: 5 kB\n@@\nbash\n@@\n" +
-		"/dev/sdc 1000 400 600 40% /\n@@\n@@\n/home/me\nos:kali:debian\nsystemd\n"
+		"/dev/sdc 1000 400 600 40% /\n@@\n@@\n/home/me\nos:kali:debian\nsystemd\n@@\ntsssh\n"
 	s := ParseSample(out)
-	if s.OSID != "kali" || s.OSLike != "debian" || s.Home != "/home/me" || !s.Systemd {
-		t.Fatalf("got id=%q like=%q home=%q systemd=%v", s.OSID, s.OSLike, s.Home, s.Systemd)
+	if s.OSID != "kali" || s.OSLike != "debian" || s.Home != "/home/me" || !s.Systemd || !s.TailscaleSSH {
+		t.Fatalf("got id=%q like=%q home=%q systemd=%v tsssh=%v", s.OSID, s.OSLike, s.Home, s.Systemd, s.TailscaleSSH)
 	}
 	if s.Disk.Used != 400*1024 {
 		t.Fatalf("disk %+v", s.Disk)

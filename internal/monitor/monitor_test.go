@@ -296,8 +296,8 @@ func TestServiceInContainerIsNamedNotControllable(t *testing.T) {
 }
 
 func TestDetectServicesPrefersDistroProcess(t *testing.T) {
-	ss := detectServices(map[string]bool{"postgres": true}, map[string]string{"postgres": bentoID, "nginx": ""},
-		nil, nil, nil)
+	ss := detectServices(guestState{procs: map[string]bool{"postgres": true}, inContainer: map[string]string{"postgres": bentoID, "nginx": ""}},
+		nil, nil)
 	if len(ss) != 2 {
 		t.Fatalf("services %+v", ss)
 	}
@@ -306,6 +306,48 @@ func TestDetectServicesPrefersDistroProcess(t *testing.T) {
 	}
 	if ng := ss[1]; ng.ID != "nginx" || ng.Controllable || !ng.InContainer || ng.Container != "" {
 		t.Errorf("container nginx %+v", ng)
+	}
+}
+
+func TestDetectServicesTailscaleAndSSH(t *testing.T) {
+	byID := func(ss []ServiceStatus) map[string]ServiceStatus {
+		out := map[string]ServiceStatus{}
+		for _, s := range ss {
+			out[s.ID] = s
+		}
+		return out
+	}
+	all := []string{"tailscale", "tailscale-ssh", "ssh"}
+
+	got := byID(detectServices(guestState{procs: map[string]bool{"tailscaled": true}, tailscaleSSH: true}, nil, nil))
+	if ts := got["tailscale"]; !ts.Running || !ts.Controllable {
+		t.Errorf("tailscale %+v", ts)
+	}
+	if ss := got["tailscale-ssh"]; !ss.Running || ss.Controllable {
+		t.Errorf("tailscale ssh %+v", ss)
+	}
+	if _, ok := got["ssh"]; ok {
+		t.Error("unwatched stopped OpenSSH listed")
+	}
+
+	// Tailscale SSH is down when tailscaled is, even if the pref is on.
+	got = byID(detectServices(guestState{procs: map[string]bool{}, tailscaleSSH: true}, nil, all))
+	if got["tailscale"].Running || got["tailscale-ssh"].Running || got["ssh"].Running {
+		t.Errorf("stopped %+v", got)
+	}
+
+	// Socket-activated sshd: root-owned listener on :22 and no sshd process.
+	got = byID(detectServices(guestState{procs: map[string]bool{}, ports: []wsl.Port{{Port: 22}}}, nil, nil))
+	if s := got["ssh"]; !s.Running || s.Detail != "socket-activated" {
+		t.Errorf("socket ssh %+v", s)
+	}
+	got = byID(detectServices(guestState{procs: map[string]bool{}, ports: []wsl.Port{{Port: 22, Loopback: true}}}, nil, nil))
+	if _, ok := got["ssh"]; ok {
+		t.Error("loopback :22 taken for sshd")
+	}
+	got = byID(detectServices(guestState{procs: map[string]bool{"sshd-session": true}}, nil, nil))
+	if s := got["ssh"]; !s.Running || s.Detail != "" {
+		t.Errorf("sshd-session %+v", s)
 	}
 }
 

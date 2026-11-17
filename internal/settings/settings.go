@@ -48,11 +48,11 @@ func DefaultAlerts() *Alerts {
 }
 
 // AllowedRefresh are the intervals offered in the UI.
-var AllowedRefresh = []int{2, 5, 10}
+var AllowedRefresh = []int{2, 5, 10, 60}
 
 // Default returns the defaults applied for a missing or invalid file.
 func Default(watched []string) Settings {
-	return Settings{Theme: "system", RefreshSeconds: 5, WatchedServices: watched, Alerts: DefaultAlerts()}
+	return Settings{Theme: "system", RefreshSeconds: 60, WatchedServices: watched, Alerts: DefaultAlerts()}
 }
 
 // Interval returns RefreshSeconds as a duration.

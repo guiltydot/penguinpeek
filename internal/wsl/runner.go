@@ -20,8 +20,8 @@ const (
 	LevelLite Level = iota
 	// LevelLive adds listening ports (every visible tick).
 	LevelLive
-	// LevelFull adds disk usage, $HOME, os-release and PID 1, which rarely
-	// change and are refreshed every 30 s.
+	// LevelFull adds disk usage, $HOME, os-release, PID 1 and whether
+	// Tailscale SSH is on, which rarely change and are refreshed every 30 s.
 	LevelFull
 )
 
@@ -40,13 +40,17 @@ const metricsScript = `read -r up _ < /proc/uptime; echo "$up"; echo @@; ` +
 	// "%<cgroup> <comm>" so a containerized nginx is not taken for the
 	// distro's own nginx service.
 	`{ for d in /proc/[0-9]*; do read -r c < "$d/comm" || continue; g=; read -r g < "$d/cgroup"; ` +
-	`case $g in *docker[-/]*|*libpod-*) echo "%$g $c";; *) echo "$c";; esac; done; } 2>/dev/null; echo @@; ` +
+	`case $g in *docker[-/]*|*libpod-*) echo "%$g $c";; *) echo "$c"; [ "$c" = tailscaled ] && t=1;; esac; done; } 2>/dev/null; echo @@; ` +
 	`if [ "$2" = 2 ]; then df -kP /; fi; echo @@; ` +
 	// ss names only the caller's own processes without root; that covers
 	// dev servers, and the UI labels well-known ports for the rest.
 	`if [ "$2" -ge 1 ]; then if command -v ss >/dev/null 2>&1; then ss -ltnpH 2>/dev/null; ` +
 	`else awk 'FNR>1 && $4=="0A" {print "P", $2}' /proc/net/tcp /proc/net/tcp6 2>/dev/null; fi; fi; echo @@; ` +
-	`if [ "$2" = 2 ]; then echo "$HOME"; ( . /etc/os-release 2>/dev/null; echo "os:$ID:$ID_LIKE" ); read -r i < /proc/1/comm; echo "$i"; fi`
+	`if [ "$2" = 2 ]; then echo "$HOME"; ( . /etc/os-release 2>/dev/null; echo "os:$ID:$ID_LIKE" ); read -r i < /proc/1/comm; echo "$i"; fi; echo @@; ` +
+	// Tailscale SSH runs inside tailscaled, so it has no process or port of
+	// its own; ask tailscaled (its socket is world-writable) at full level.
+	`if [ "$2" = 2 ] && [ "$t" = 1 ] && command -v tailscale >/dev/null 2>&1; then ` +
+	`case "$(tailscale debug prefs 2>/dev/null)" in *'"RunSSH": true'*) echo tsssh;; esac; fi`
 
 // Runner invokes wsl.exe.
 type Runner struct {

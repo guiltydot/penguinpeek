@@ -146,6 +146,7 @@ type fullInfo struct {
 	disk         DiskInfo
 	home         string
 	osID, osLike string
+	tailscaleSSH bool
 }
 
 // New creates a monitor. onUpdate is called from the loop goroutine.
@@ -365,7 +366,7 @@ func (m *Monitor) tick(ctx context.Context) {
 			if level == wsl.LevelFull {
 				full = fullInfo{
 					disk: DiskInfo{Used: s.Disk.Used, Total: s.Disk.Total},
-					home: s.Home, osID: s.OSID, osLike: s.OSLike,
+					home: s.Home, osID: s.OSID, osLike: s.OSLike, tailscaleSSH: s.TailscaleSSH,
 				}
 				m.addDiskFile(&full.disk, selected)
 				haveFull = true
@@ -376,11 +377,14 @@ func (m *Monitor) tick(ctx context.Context) {
 			if level == wsl.LevelLite {
 				s.Ports = prevPorts // not sampled while hidden
 			}
+			guest := func() guestState {
+				return guestState{s.Procs, s.ContainerProcs, m.knownContainers(), s.Ports, haveFull && full.tailscaleSSH}
+			}
 			metrics = &Metrics{
 				CPUPercent: wsl.CPUPercent(base, cur),
 				Memory:     s.Mem,
 				UptimeSec:  s.UptimeSec,
-				Services:   detectServices(s.Procs, s.ContainerProcs, m.knownContainers(), distros, watched),
+				Services:   detectServices(guest(), distros, watched),
 				Ports:      s.Ports,
 				SampledAt:  time.Now(),
 			}
@@ -391,7 +395,7 @@ func (m *Monitor) tick(ctx context.Context) {
 				cs, cerr := m.listContainers(ctx, selected)
 				if cerr == "" {
 					m.rememberContainers(cs)
-					metrics.Services = detectServices(s.Procs, s.ContainerProcs, m.knownContainers(), distros, watched)
+					metrics.Services = detectServices(guest(), distros, watched)
 				}
 				if wantContainers {
 					metrics.Containers, metrics.ContainersError = cs, cerr
@@ -756,6 +760,9 @@ func (m *Monitor) ServiceControl(name, id, action string) error {
 		return fmt.Errorf("unknown service %q", id)
 	}
 	def := Catalog[i]
+	if len(def.Units) == 0 {
+		return fmt.Errorf("%s cannot be started or stopped from PenguinPeek", def.Name)
+	}
 	if err := m.requireRunning(name); err != nil {
 		return err
 	}

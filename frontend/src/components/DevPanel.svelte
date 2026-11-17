@@ -1,6 +1,7 @@
 <script lang="ts">
   import { app } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
+  import ServiceIcon from "./ServiceIcon.svelte";
   import type { Container } from "../lib/api";
 
   const services = $derived(app.metrics?.services ?? []);
@@ -50,7 +51,7 @@
       <ul>
         {#each services as s (s.id)}
           <li>
-            <i class:on={s.running}></i>
+            <ServiceIcon id={s.id} dim={!s.running} />
             <span class="name">{s.name}</span>
             {#if s.inContainer}
               <span class="detail" title="This {s.name} is part of a Docker container, not a service installed in Linux">
@@ -79,7 +80,9 @@
                 <Icon name={s.running ? "stop" : "play"} size={12} />
               </button>
             {:else}
-              <span class="row-btn" title="Managed by Docker Desktop"></span>
+              <span class="row-btn" title={s.id === "tailscale-ssh"
+                ? "Turn on with: sudo tailscale set --ssh"
+                : "Managed by Docker Desktop"}></span>
             {/if}
           </li>
         {/each}

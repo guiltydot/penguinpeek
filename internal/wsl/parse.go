@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"bytes"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf16"
@@ -178,6 +179,7 @@ type Sample struct {
 	Systemd        bool   // PID 1 is systemd
 	OSID           string // /etc/os-release ID, e.g. "ubuntu"
 	OSLike         string // /etc/os-release ID_LIKE, e.g. "debian"
+	TailscaleSSH   bool   // tailscaled serves SSH (`tailscale set --ssh`)
 }
 
 const sectionSep = "@@"
@@ -232,6 +234,7 @@ func ParseSample(out string) Sample {
 		}
 		r.Systemd = hi[len(hi)-1] == "systemd"
 	}
+	r.TailscaleSSH = slices.Contains(get(7), "tsssh")
 	return r
 }
 
