@@ -33,6 +33,20 @@ type Settings struct {
 	// Distros caches the registered WSL2 distros so startup needs no
 	// `wsl --list`; refreshed from the distro picker or when a new one runs.
 	Distros []wsl.Distro `json:"distros,omitempty"`
+	// Version is the settings format; files without it predate Version 1.
+	Version int `json:"version"`
+}
+
+// CurrentVersion is the settings format written by this build. Version 1
+// changed the default refresh from 5 s to 60 s.
+const CurrentVersion = 1
+
+// migrate upgrades settings read from an older file.
+func (s *Settings) migrate() {
+	if s.Version < 1 && s.RefreshSeconds == 5 {
+		s.RefreshSeconds = 60 // the old default, not a choice: take the new one
+	}
+	s.Version = CurrentVersion
 }
 
 // Alerts selects which Windows notifications are shown.
@@ -52,7 +66,7 @@ var AllowedRefresh = []int{2, 5, 10, 60}
 
 // Default returns the defaults applied for a missing or invalid file.
 func Default(watched []string) Settings {
-	return Settings{Theme: "system", RefreshSeconds: 60, WatchedServices: watched, Alerts: DefaultAlerts()}
+	return Settings{Theme: "system", RefreshSeconds: 60, WatchedServices: watched, Alerts: DefaultAlerts(), Version: CurrentVersion}
 }
 
 // Interval returns RefreshSeconds as a duration.
@@ -99,6 +113,7 @@ func Open(dir string, def Settings) (*Store, error) {
 	if err := json.Unmarshal(b, &s); err != nil {
 		return st, fmt.Errorf("parse settings %q: %w", st.path, err)
 	}
+	s.migrate()
 	st.cur = s.Normalize(def)
 	return st, nil
 }

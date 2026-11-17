@@ -65,3 +65,27 @@ func TestCorruptFileFallsBack(t *testing.T) {
 		t.Fatal("want defaults")
 	}
 }
+
+func TestOldDefaultRefreshMigratesOnce(t *testing.T) {
+	cases := []struct {
+		file string
+		want int
+	}{
+		{`{"refreshSeconds":5}`, 60},            // the old default
+		{`{"refreshSeconds":2}`, 2},             // a deliberate choice
+		{`{"refreshSeconds":5,"version":1}`, 5}, // chosen after the change
+	}
+	for _, c := range cases {
+		dir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(dir, "settings.json"), []byte(c.file), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		st, err := Open(dir, Default(nil))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := st.Get(); got.RefreshSeconds != c.want || got.Version != CurrentVersion {
+			t.Errorf("%s: got refresh=%d version=%d, want %d", c.file, got.RefreshSeconds, got.Version, c.want)
+		}
+	}
+}

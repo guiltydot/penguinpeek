@@ -66,7 +66,7 @@
       <div class="seg" role="radiogroup" aria-label="Refresh interval">
         {#each intervals as s (s)}
           <button role="radio" aria-checked={app.settings.refreshSeconds === s}
-            onclick={() => app.saveSettings({ refreshSeconds: s })}>{s < 60 ? ` s` : ` min`}</button>
+            onclick={() => app.saveSettings({ refreshSeconds: s })}>{s < 60 ? `${s} s` : `${s / 60} min`}</button>
         {/each}
       </div>
       <p class="hint">While the window is closed PenguinPeek checks every 30 s, and never starts a stopped distribution.</p>
