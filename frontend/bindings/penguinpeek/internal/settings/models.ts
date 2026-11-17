@@ -50,4 +50,9 @@ export interface Settings {
      * `wsl --list`; refreshed from the distro picker or when a new one runs.
      */
     "distros"?: wsl$0.Distro[] | null;
+
+    /**
+     * Version is the settings format; files without it predate Version 1.
+     */
+    "version": number;
 }

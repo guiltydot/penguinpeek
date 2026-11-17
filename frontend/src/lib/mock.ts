@@ -13,6 +13,7 @@ let settings: Settings = {
   refreshSeconds: 60,
   watchedServices: ["docker", "postgres", "redis"],
   alerts: { distroStopped: true, serviceStopped: true, highMemory: true },
+  version: 1,
 };
 let autostart = false;
 
