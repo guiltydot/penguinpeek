@@ -28,7 +28,7 @@ const state = {
   busy: "",
   uptime: 4 * 3600 + 12 * 60,
   cpu: 7,
-  services: { docker: true, postgres: true, redis: false, nginx: true } as Record<string, boolean>,
+  services: { docker: true, postgres: true, redis: false, nginx: true, tailscale: true, "tailscale-ssh": true, ssh: false } as Record<string, boolean>,
   vhdx: 23.2 * GiB,
   containersWanted: false,
   containers: [
@@ -42,7 +42,10 @@ const state = {
 function snap(): Snapshot {
   const sel = state.distros.find((d) => d.name === state.selected)!;
   state.cpu = Math.max(1, Math.min(96, state.cpu + (Math.random() - 0.45) * 12));
-  const names: Record<string, string> = { docker: "Docker", postgres: "PostgreSQL", redis: "Redis", nginx: "Nginx" };
+  const names: Record<string, string> = {
+    docker: "Docker", postgres: "PostgreSQL", redis: "Redis", nginx: "Nginx",
+    tailscale: "Tailscale", "tailscale-ssh": "Tailscale SSH", ssh: "OpenSSH",
+  };
   return {
     distros: state.distros.map((d) => ({ ...d })),
     selected: state.selected,
@@ -74,8 +77,8 @@ function snap(): Snapshot {
               id,
               name: names[id],
               running,
-              detail: id === "docker" ? "Docker Desktop" : "",
-              controllable: id !== "docker" && id !== "nginx",
+              detail: id === "docker" ? "Docker Desktop" : id === "tailscale-ssh" ? "via tailscaled" : "",
+              controllable: id !== "docker" && id !== "nginx" && id !== "tailscale-ssh",
               // Preview a web app image's bundled nginx (e.g. BentoPDF).
               inContainer: id === "nginx",
               container: id === "nginx" ? "bentopdf" : "",
@@ -131,6 +134,9 @@ export const mock: Backend = {
     { id: "mysql", name: "MySQL / MariaDB" },
     { id: "mongodb", name: "MongoDB" },
     { id: "nginx", name: "Nginx" },
+    { id: "tailscale", name: "Tailscale" },
+    { id: "tailscale-ssh", name: "Tailscale SSH" },
+    { id: "ssh", name: "OpenSSH" },
   ],
   select: async (n) => {
     state.selected = n;

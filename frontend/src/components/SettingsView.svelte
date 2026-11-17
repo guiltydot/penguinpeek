@@ -1,6 +1,7 @@
 <script lang="ts">
   import { app } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
+  import ServiceIcon from "./ServiceIcon.svelte";
 
   const themes = [
     { id: "system", label: "System" },
@@ -78,6 +79,7 @@
           <label>
             <input type="checkbox" checked={app.settings.watchedServices?.includes(s.id)}
               onchange={(e) => toggleService(s.id, e.currentTarget.checked)} />
+            <ServiceIcon id={s.id} size={16} />
             {s.name}
           </label>
         {/each}
