@@ -10,7 +10,7 @@ const settingsSubs = new Set<(s: Settings) => void>();
 let settings: Settings = {
   distro: "",
   theme: "system",
-  refreshSeconds: 5,
+  refreshSeconds: 60,
   watchedServices: ["docker", "postgres", "redis"],
   alerts: { distroStopped: true, serviceStopped: true, highMemory: true },
 };

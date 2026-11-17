@@ -13,13 +13,13 @@ func TestRoundTripAndNormalize(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := st.Get(); got.RefreshSeconds != 5 || got.Theme != "system" {
+	if got := st.Get(); got.RefreshSeconds != 60 || got.Theme != "system" {
 		t.Fatalf("defaults %+v", got)
 	}
 	if _, err := st.Update(func(s *Settings) {
 		s.Distro = "Ubuntu"
 		s.Theme = "neon"      // invalid -> system
-		s.RefreshSeconds = 99 // invalid -> 5
+		s.RefreshSeconds = 99 // invalid -> 60
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func TestRoundTripAndNormalize(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := st2.Get()
-	if got.Distro != "Ubuntu" || got.Theme != "system" || got.RefreshSeconds != 5 || len(got.WatchedServices) != 1 {
+	if got.Distro != "Ubuntu" || got.Theme != "system" || got.RefreshSeconds != 60 || len(got.WatchedServices) != 1 {
 		t.Fatalf("reloaded %+v", got)
 	}
 }
@@ -61,7 +61,7 @@ func TestCorruptFileFallsBack(t *testing.T) {
 	if err == nil {
 		t.Fatal("want parse error")
 	}
-	if st.Get().RefreshSeconds != 5 {
+	if st.Get().RefreshSeconds != 60 {
 		t.Fatal("want defaults")
 	}
 }

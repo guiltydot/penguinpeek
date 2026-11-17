@@ -8,7 +8,7 @@
     { id: "light", label: "Light" },
     { id: "dark", label: "Dark" },
   ];
-  const intervals = [2, 5, 10];
+  const intervals = [2, 5, 10, 60];
 
   const alertOptions = [
     { key: "distroStopped", label: "A distribution stops unexpectedly" },
@@ -66,10 +66,10 @@
       <div class="seg" role="radiogroup" aria-label="Refresh interval">
         {#each intervals as s (s)}
           <button role="radio" aria-checked={app.settings.refreshSeconds === s}
-            onclick={() => app.saveSettings({ refreshSeconds: s })}>{s} s</button>
+            onclick={() => app.saveSettings({ refreshSeconds: s })}>{s < 60 ? ` s` : ` min`}</button>
         {/each}
       </div>
-      <p class="hint">While the window is closed PenguinPeek checks every 30 s instead, and never starts a stopped distribution.</p>
+      <p class="hint">While the window is closed PenguinPeek checks every 30 s, and never starts a stopped distribution.</p>
     </section>
 
     <section>
