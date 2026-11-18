@@ -4,6 +4,13 @@ All notable changes to PenguinPeek are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- The GitHub Copilot CLI shows up in Services while `copilot` or its
+  `copilotd` daemon runs. It is shown only; PenguinPeek does not start or
+  stop it.
+
 ## [1.0.1]
 
 ### Security
