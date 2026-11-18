@@ -4,12 +4,22 @@ All notable changes to PenguinPeek are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.1.0]
 
 ### Added
+- Tailscale, Tailscale SSH and OpenSSH in Services. Tailscale SSH is read
+  from tailscaled's settings; a socket-activated sshd (Ubuntu 22.10+) and
+  OpenSSH 9.8+ `sshd-session` processes count as running.
 - The GitHub Copilot CLI shows up in Services while `copilot` or its
   `copilotd` daemon runs. It is shown only; PenguinPeek does not start or
   stop it.
+- A coloured badge for each service in Services and Settings, greyed out
+  while the service is stopped.
+
+### Changed
+- The open window refreshes every minute by default ("1 min" is a new
+  choice). Settings saved with the old 5 s default move to 1 min; other
+  saved intervals are kept.
 
 ## [1.0.1]
 
