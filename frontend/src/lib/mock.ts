@@ -29,7 +29,7 @@ const state = {
   busy: "",
   uptime: 4 * 3600 + 12 * 60,
   cpu: 7,
-  services: { docker: true, postgres: true, redis: false, nginx: true, tailscale: true, "tailscale-ssh": true, ssh: false } as Record<string, boolean>,
+  services: { docker: true, postgres: true, redis: false, nginx: true, tailscale: true, "tailscale-ssh": true, ssh: false, copilot: true } as Record<string, boolean>,
   vhdx: 23.2 * GiB,
   containersWanted: false,
   containers: [
@@ -45,7 +45,7 @@ function snap(): Snapshot {
   state.cpu = Math.max(1, Math.min(96, state.cpu + (Math.random() - 0.45) * 12));
   const names: Record<string, string> = {
     docker: "Docker", postgres: "PostgreSQL", redis: "Redis", nginx: "Nginx",
-    tailscale: "Tailscale", "tailscale-ssh": "Tailscale SSH", ssh: "OpenSSH",
+    tailscale: "Tailscale", "tailscale-ssh": "Tailscale SSH", ssh: "OpenSSH", copilot: "GitHub Copilot CLI",
   };
   return {
     distros: state.distros.map((d) => ({ ...d })),
@@ -79,7 +79,7 @@ function snap(): Snapshot {
               name: names[id],
               running,
               detail: id === "docker" ? "Docker Desktop" : id === "tailscale-ssh" ? "via tailscaled" : "",
-              controllable: id !== "docker" && id !== "nginx" && id !== "tailscale-ssh",
+              controllable: id !== "docker" && id !== "nginx" && id !== "tailscale-ssh" && id !== "copilot",
               // Preview a web app image's bundled nginx (e.g. BentoPDF).
               inContainer: id === "nginx",
               container: id === "nginx" ? "bentopdf" : "",
@@ -138,6 +138,7 @@ export const mock: Backend = {
     { id: "tailscale", name: "Tailscale" },
     { id: "tailscale-ssh", name: "Tailscale SSH" },
     { id: "ssh", name: "OpenSSH" },
+    { id: "copilot", name: "GitHub Copilot CLI" },
   ],
   select: async (n) => {
     state.selected = n;

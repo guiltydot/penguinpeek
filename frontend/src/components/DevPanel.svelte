@@ -82,7 +82,9 @@
             {:else}
               <span class="row-btn" title={s.id === "tailscale-ssh"
                 ? "Turn on with: sudo tailscale set --ssh"
-                : "Managed by Docker Desktop"}></span>
+                : s.id === "copilot"
+                  ? "Start it with: copilot"
+                  : "Managed by Docker Desktop"}></span>
             {/if}
           </li>
         {/each}

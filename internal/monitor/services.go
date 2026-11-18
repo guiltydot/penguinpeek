@@ -44,6 +44,9 @@ var Catalog = []ServiceDef{
 	{"tailscale-ssh", "Tailscale SSH", nil, nil},
 	// OpenSSH 9.8+ names per-connection processes sshd-session.
 	{"ssh", "OpenSSH", []string{"sshd", "sshd-session"}, []string{"ssh", "sshd"}},
+	// The Copilot CLI is a user tool, not a system service: "copilot" is the
+	// sampler's name for CLI and SDK server processes, copilotd its daemon.
+	{"copilot", "GitHub Copilot CLI", []string{"copilot", "copilotd"}, nil},
 }
 
 // DefaultWatched are always shown, running or not.
@@ -71,7 +74,7 @@ func detectServices(g guestState, distros []wsl.Distro, watched []string) []Serv
 	}
 	var out []ServiceStatus
 	for _, def := range Catalog {
-		st := ServiceStatus{ID: def.ID, Name: def.Name, Controllable: true}
+		st := ServiceStatus{ID: def.ID, Name: def.Name, Controllable: len(def.Units) > 0}
 		st.Running = slices.ContainsFunc(def.Procs, func(p string) bool { return procs[p] })
 		if !st.Running {
 			for _, p := range def.Procs {
@@ -92,6 +95,8 @@ func detectServices(g guestState, distros []wsl.Distro, watched []string) []Serv
 			// Socket activation (Ubuntu 22.10+): systemd holds port 22 and
 			// starts sshd per connection, so no sshd runs while idle.
 			st.Running, st.Detail = true, "socket-activated"
+		case def.ID == "copilot" && !procs["copilot"] && procs["copilotd"]:
+			st.Detail = "copilotd"
 		}
 		if st.Running || slices.Contains(watched, def.ID) {
 			out = append(out, st)

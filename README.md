@@ -51,7 +51,8 @@ tray, ~21 MB of RAM, and it never starts a stopped distro on its own.**
 **Development services**
 - Status for Docker, PostgreSQL, Redis, MySQL/MariaDB, MongoDB and Nginx —
   start or stop them with a click (systemd or `service`, run as root).
-- Docker Desktop is recognised too.
+- Docker Desktop is recognised too, and so is the GitHub Copilot CLI
+  (`copilot` sessions and its `copilotd` daemon), shown but not controlled.
 - **Containers** tab: every Docker container with its image and status,
   grouped by Compose project. Start, stop or restart one container or a
   whole project. Works with Docker inside the distro and with Docker

@@ -40,7 +40,13 @@ const metricsScript = `read -r up _ < /proc/uptime; echo "$up"; echo @@; ` +
 	// "%<cgroup> <comm>" so a containerized nginx is not taken for the
 	// distro's own nginx service.
 	`{ for d in /proc/[0-9]*; do read -r c < "$d/comm" || continue; g=; read -r g < "$d/cgroup"; ` +
-	`case $g in *docker[-/]*|*libpod-*) echo "%$g $c";; *) echo "$c"; [ "$c" = tailscaled ] && t=1;; esac; done; } 2>/dev/null; echo @@; ` +
+	// The GitHub Copilot CLI is a single-executable Node app whose main
+	// thread renames comm to "MainThread" (or "node" for the npm loader), so
+	// for those two names argv is read too (a builtin read joins its NUL-
+	// separated args) and reported as "copilot". Its daemon is copilotd.
+	`case $g in *docker[-/]*|*libpod-*) echo "%$g $c";; *) case $c in MainThread|node) a=; read -r a < "$d/cmdline"; ` +
+	`case $a in *copilot-language-server*) ;; */copilot|*/copilot-*|copilot|copilot-*) c=copilot;; esac;; esac; ` +
+	`echo "$c"; [ "$c" = tailscaled ] && t=1;; esac; done; } 2>/dev/null; echo @@; ` +
 	`if [ "$2" = 2 ]; then df -kP /; fi; echo @@; ` +
 	// ss names only the caller's own processes without root; that covers
 	// dev servers, and the UI labels well-known ports for the rest.

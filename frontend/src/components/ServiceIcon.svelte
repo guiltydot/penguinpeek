@@ -13,6 +13,7 @@
     tailscale: "#3B4252",
     "tailscale-ssh": "#3B4252",
     ssh: "#B45309",
+    copilot: "#24292F",
   };
   const bg = $derived(COLOR[id] ?? "#64748B");
 </script>
@@ -55,6 +56,12 @@
       <!-- a key -->
       <circle cx="7.2" cy="10" r="2.7" />
       <path d="M9.9 10h6.3M14.2 10v2.6M16.2 10v2" />
+    {:else if id === "copilot"}
+      <!-- a friendly face with goggles -->
+      <path d="M4.2 12.4v-2.6a5.8 4.6 0 0 1 11.6 0v2.6c0 2.2-2.6 3.4-5.8 3.4s-5.8-1.2-5.8-3.4z" />
+      <rect x="5.4" y="6.4" width="4" height="3.2" rx="1.4" />
+      <rect x="10.6" y="6.4" width="4" height="3.2" rx="1.4" />
+      <path d="M8.4 12v1.2M11.6 12v1.2" />
     {:else}
       <circle cx="10" cy="10" r="4.6" /><circle cx="10" cy="10" r="1.4" fill="#fff" stroke="none" />
     {/if}
