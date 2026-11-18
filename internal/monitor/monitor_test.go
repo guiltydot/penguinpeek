@@ -351,6 +351,29 @@ func TestDetectServicesTailscaleAndSSH(t *testing.T) {
 	}
 }
 
+func TestDetectServicesCopilot(t *testing.T) {
+	find := func(ss []ServiceStatus) (ServiceStatus, bool) {
+		for _, s := range ss {
+			if s.ID == "copilot" {
+				return s, true
+			}
+		}
+		return ServiceStatus{}, false
+	}
+	if s, ok := find(detectServices(guestState{procs: map[string]bool{"copilot": true}}, nil, nil)); !ok || !s.Running || s.Controllable || s.Detail != "" {
+		t.Errorf("cli %+v", s)
+	}
+	if s, ok := find(detectServices(guestState{procs: map[string]bool{"copilotd": true}}, nil, nil)); !ok || !s.Running || s.Detail != "copilotd" {
+		t.Errorf("daemon only %+v", s)
+	}
+	if _, ok := find(detectServices(guestState{procs: map[string]bool{}}, nil, nil)); ok {
+		t.Error("unwatched stopped Copilot listed")
+	}
+	if err := (&Monitor{}).ServiceControl("Ubuntu", "copilot", "start"); err == nil {
+		t.Error("copilot start allowed")
+	}
+}
+
 func TestContainerActionTargets(t *testing.T) {
 	be := newFake()
 	be.dockerd = true
